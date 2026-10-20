@@ -4,10 +4,12 @@ from deposito_strumenti import DepositoStrumenti
 
 FILE_STRUMENTI = "strumenti.csv"
 
+
 def main(page: ft.Page):
     page.title = "Lab05"
     page.horizontal_alignment = "center"
     page.theme_mode = ft.ThemeMode.DARK
+    prezzoStr = 0
 
     # --- ALERT ---
     alert = AlertManager(page)
@@ -36,7 +38,39 @@ def main(page: ft.Page):
     lista_strumenti = ft.ListView(expand=True, spacing=5, padding=10, auto_scroll=True)
 
     # Tutti i TextField per le info necessarie per aggiungere un nuovo strumento (tipo, marca, anno, contatore posti)
-    # TODO
+    def alza_prezzo(e):
+        nonlocal prezzoStr  # NONLOCAL serve per modificare la variabile prezzoStr definita all'esterno della funzione
+        prezzoStr = prezzoStr + 1
+        targhetta_prezzo.value = f"{prezzoStr} €"
+        page.update()
+
+    def abbassa_prezzo(e):
+        nonlocal prezzoStr  # NONLOCAL serve per modificare la variabile prezzoStr definita all'esterno della funzione
+        if prezzoStr > 0:
+            prezzoStr = prezzoStr - 1
+        targhetta_prezzo.value = f"{prezzoStr} €"
+        page.update()
+
+    def aggiungi_strumento(e):
+        nonlocal prezzoStr  # serve a prendere il valore di prezzoStr del main quindi quello esterno alla funzione
+        anno = 0
+        try:
+            anno = int(input_anno_strumento.value)
+        except ValueError:
+            alert.show_alert("❌ L'anno di acquisto deve essere un numero intero.")
+            return
+        tipo = input_tipo_strumento.value
+        marca = input_marca_strumento.value
+        valore = prezzoStr
+        strumento = deposito.aggiungi_strumento(tipo, marca, anno, valore)
+        aggiorna_lista_strumenti()
+        input_tipo_strumento.value = ""
+        input_marca_strumento.value = ""
+        input_anno_strumento.value = ""
+        prezzoStr = 0
+        targhetta_prezzo.value = f"{prezzoStr} €"
+        alert.show_alert(f"✅ Strumento {strumento.codice} aggiunto con successo! ")
+        page.update()
 
     # --- FUNZIONI APP ---
     def aggiorna_lista_strumenti():
@@ -58,14 +92,20 @@ def main(page: ft.Page):
         page.update()
 
     # Handlers per la gestione dei pulsanti utili all'inserimento di un nuovo strumento
-    # TODO
+    txt_nuovo_strumento = ft.Text("Aggiungi Nuovo Strumento", size=20)
+    input_tipo_strumento = ft.TextField(label="Tipo")
+    input_marca_strumento = ft.TextField(label="Marca")
+    input_anno_strumento = ft.TextField(label="Anno di Acquisto")
+    targhetta_prezzo = ft.Text(f"{prezzoStr} €", size=16, weight=ft.FontWeight.BOLD)
+    btn_alza_prezzo = ft.TextButton("^", width=30, height=30, on_click=alza_prezzo)
+    btn_abbassa_prezzo = ft.TextButton("v", width=30, height=30, on_click=abbassa_prezzo)
 
     # --- EVENTI ---
     toggle_cambia_tema = ft.Switch(label="Tema scuro", value=True, on_change=cambia_tema)
     pulsante_conferma_responsabile = ft.ElevatedButton("Conferma", on_click=conferma_responsabile)
 
     # Pulsanti per la gestione dell'inserimento di un nuovo strumento
-    # TODO
+    btn_aggiungi_strumento = ft.ElevatedButton("Aggiungi Strumento", on_click=lambda e: aggiungi_strumento(e))
 
     # --- LAYOUT ---
     page.add(
@@ -84,12 +124,20 @@ def main(page: ft.Page):
 
         # Sezione 3
         # TODO
+        ft.Divider(),
+        txt_nuovo_strumento,
+        ft.Row(controls=[input_tipo_strumento, input_marca_strumento, input_anno_strumento, targhetta_prezzo,
+                         btn_alza_prezzo, btn_abbassa_prezzo],
+               alignment=ft.MainAxisAlignment.CENTER),
+        btn_aggiungi_strumento,
 
         # Sezione 4
         ft.Divider(),
         ft.Text("Strumenti", size=20),
         lista_strumenti,
+
     )
     aggiorna_lista_strumenti()
+
 
 ft.app(target=main)
